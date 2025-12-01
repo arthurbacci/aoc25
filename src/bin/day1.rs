@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-use bare_metal_modulo::ModNumC;
+use bare_metal_modulo::WrapCountNumC;
 
 peg::parser! {
     grammar rotations_parser() for str {
@@ -18,7 +18,7 @@ peg::parser! {
             = r:(rotation()) "\n" { r }
 
         pub rule rotations() -> Vec<i32>
-            = l:(rotation_line() *) { l }
+            = l:(rotation_line() *) ("\n" *) { l }
     }
 }
 
@@ -29,15 +29,29 @@ fn main() {
 
     let rotations = rotations_parser::rotations(&data).unwrap();
 
-    let mut dial: ModNumC<i32, 100> = ModNumC::new(50);
-    let mut pass = 0;
+    let mut dial: WrapCountNumC<i32, 100> = WrapCountNumC::new(50);
+    let mut pass1 = 0;
+    let mut pass2 = 0;
 
     for rotation in rotations {
-        dial += rotation;
+
+        if dial == 0 && rotation < 0 {
+            pass2 -= 1;
+        }
+
+        dial = dial + rotation;
+
+        pass2 += dial.wraps().abs();
+
+        if dial == 0 && rotation < 0 {
+            pass2 += 1;
+        }
+
         if dial == 0 {
-            pass += 1;
+            pass1 += 1;
         }
     }
 
-    println!("Password: {}", pass);
+    println!("Part 1 password: {}", pass1);
+    println!("Part 2 password: {}", pass2);
 }
