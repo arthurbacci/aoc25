@@ -1,0 +1,8 @@
+[package]
+name = "aoc25"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bare_metal_modulo = "1.2.5"
+peg = "0.8.5"
