@@ -1,8 +1,6 @@
 use std::fs::File;
 use std::io::Read;
 
-use bare_metal_modulo::WrapCountNumC;
-
 peg::parser! {
     grammar rotations_parser() for str {
         rule dir_sign() -> i32
@@ -29,23 +27,23 @@ fn main() {
 
     let rotations = rotations_parser::rotations(&data).unwrap();
 
-    let mut dial: WrapCountNumC<i32, 100> = WrapCountNumC::new(50);
+    let mut dial = 50;
     let mut pass1 = 0;
     let mut pass2 = 0;
 
     for rotation in rotations {
+        let rm = rotation % 100;
 
-        if dial == 0 && rotation < 0 {
-            pass2 -= 1;
-        }
+        pass2 += rotation.abs() / 100;
 
-        dial = dial + rotation;
+        dial += rm;
 
-        pass2 += dial.wraps().abs();
-
-        if dial == 0 && rotation < 0 {
+        if dial >= 100 || (dial < 0 && dial != rm) || dial == 0 {
             pass2 += 1;
         }
+
+        dial += 100;
+        dial %= 100;
 
         if dial == 0 {
             pass1 += 1;
