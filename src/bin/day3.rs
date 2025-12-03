@@ -14,8 +14,6 @@ peg::parser! {
     }
 }
 
-
-
 fn main() {
     let mut f = File::open("day3.txt").unwrap();
     let mut data = String::new();
@@ -23,38 +21,53 @@ fn main() {
 
     let banks = banks_parser::banks(&data).unwrap();
 
-    let mut part1_total: u32 = 0;
+    let mut part1 = 0;
+    let mut part2 = 0;
 
     for bank in banks {
-        let (max_pos, max) = bank.iter()
-            // Can't be the last one
-            .take(bank.len() - 1)
-            .enumerate()
-            .max_by(|x, y| x.1.cmp(y.1))
-            .unwrap();
+        for part in 1..=2 {
+            let max: Box<dyn Iterator<Item=u64>> = Box::new(
+                bank.iter()
+                    .rev()
+                    .scan(0, |st, &x| {
+                        if x > *st {
+                            *st = x;
+                        }
+                        Some(*st as u64)
+                    })
+            );
 
-        let max = bank.iter()
-            .take(bank.len() - 1)
-            .max()
-            .unwrap();
-        
-        let max_positions = bank.iter()
-            .enumerate()
-            .take(bank.len() - 1)
-            .filter(|(_, x)| *x == max);
+            let result = (1..(if part == 1 { 2 } else { 12 }))
+                .fold(max, |max, it| {
+                    Box::new(
+                        bank.iter()
+                            .rev()
+                            .skip(it)
+                            .zip(max)
+                            .map(move |(n, m)|
+                                (*n as u64) * 10_u64.pow(it as u32) + m
+                            )
+                            .scan(0, |st, x| {
+                                if x > *st {
+                                    *st = x;
+                                }
+                                Some(*st)
+                            })
+                    )
+                })
+                .last()
+                .unwrap();
 
-        let second_max = max_positions
-            .map(
-                |(max_pos, _)| bank.iter()
-                    .skip(max_pos + 1)
-                    .max()
-                    .unwrap()
-            )
-            .max()
-            .unwrap();
+            if part == 1 {
+                part1 += result;
+            } else {
+                part2 += result;
+            }
+        }
         
-        part1_total += (max * 10 + second_max) as u32;
     }
 
-    println!("{part1_total}");
+    println!("Part 1: {part1}");
+    println!("Part 2: {part2}");
 }
+
