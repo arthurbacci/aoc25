@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::Read;
 
+use criterion::Criterion;
+
 use itertools::Itertools;
 
 peg::parser! {
@@ -74,7 +76,7 @@ pub fn all_starting_with(start: u64) -> impl Iterator<Item = u64> {
 }
 
 
-fn main() {
+fn part1() -> String {
     let mut f = File::open("day2.txt").unwrap();
     let mut data = String::new();
     f.read_to_string(&mut data).unwrap();
@@ -82,17 +84,40 @@ fn main() {
     let id_ranges = id_ranges_parser::id_ranges(&data).unwrap();
 
     let mut total1 = 0;
-    let mut total2 = 0;
 
     for (fst, lst) in id_ranges {
         total1 += InvalidIdGen::<2>::starting_with(fst)
             .take_while(|&x| x <= lst)
             .sum::<u64>();
+    }
+    
+    total1.to_string()
+}
+
+fn part2() -> String {
+    let mut f = File::open("day2.txt").unwrap();
+    let mut data = String::new();
+    f.read_to_string(&mut data).unwrap();
+
+    let id_ranges = id_ranges_parser::id_ranges(&data).unwrap();
+
+    let mut total2 = 0;
+
+    for (fst, lst) in id_ranges {
         total2 += all_starting_with(fst)
             .take_while(|&x| x <= lst)
             .sum::<u64>();
     }
-
-    println!("Part 1: {total1}");
-    println!("Part 2: {total2}");
+    
+    total2.to_string()
 }
+
+
+fn main() {
+    let mut c = Criterion::default();
+
+    c.bench_function("day2_part1", |b| b.iter(|| part1()));
+
+    c.bench_function("day2_part2", |b| b.iter(|| part2()));
+}
+

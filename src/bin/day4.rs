@@ -2,6 +2,8 @@ use std::fs::File;
 use std::io::Read;
 use std::ops::{Index, IndexMut};
 
+use criterion::Criterion;
+
 peg::parser! {
     grammar rolls_parser() for str {
         rule empty_cell() -> Cell
@@ -90,17 +92,36 @@ impl IndexMut<(usize, usize)> for CellGrid {
     }
 }
 
-fn main() {
+fn part1() -> String {
     let mut f = File::open("day4.txt").unwrap();
     let mut data = String::new();
     f.read_to_string(&mut data).unwrap();
 
     let mut grid = rolls_parser::grid(&data).unwrap();
 
-    let mut part1 = 0u32;
+    let mut increment = 0;
+
+    for (i, n) in grid.neighborhoods() {
+        if grid[i] == Cell::Roll && n < 4 {
+            increment += 1;
+            grid[i] = Cell::Empty;
+        }
+    }
+
+
+    increment.to_string()
+}
+
+fn part2() -> String {
+    let mut f = File::open("day4.txt").unwrap();
+    let mut data = String::new();
+    f.read_to_string(&mut data).unwrap();
+
+    let mut grid = rolls_parser::grid(&data).unwrap();
+
     let mut part2 = 0u32;
 
-    for removal in 1.. {
+    loop {
         let mut increment = 0;
 
         for (i, n) in grid.neighborhoods() {
@@ -114,12 +135,17 @@ fn main() {
             break;
         }
 
-        if removal == 1 {
-            part1 += increment;
-        }
         part2 += increment;
     }
 
-    println!("Part 1: {part1}");
-    println!("Part 2: {part2}");
+    part2.to_string()
 }
+
+fn main() {
+    let mut c = Criterion::default();
+
+    c.bench_function("day4_part1", |b| b.iter(|| part1()));
+
+    c.bench_function("day4_part2", |b| b.iter(|| part2()));
+}
+
