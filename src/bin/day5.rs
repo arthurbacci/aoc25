@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::Read;
 
+use criterion::Criterion;
+
 peg::parser! {
     grammar list_parser() for str {
         rule number() -> u64
@@ -16,7 +18,6 @@ peg::parser! {
             = r:(range() +) ("\n" *) i:(id() +) ("\n" *) { (r, i) }
     }
 }
-
 
 fn search_id(id: u64, ranges: &[(u64, u64)]) -> Option<(u64, u64)> {
     let in_this_one = |i: usize| ranges[i].0 <= id && ranges[i].1 >= id;
@@ -38,23 +39,28 @@ fn search_id(id: u64, ranges: &[(u64, u64)]) -> Option<(u64, u64)> {
     }
 }
 
+fn unintersect(ranges: Vec<(u64, u64)>) -> Vec<(u64, u64)> {
+    let mut ret = Vec::new();
 
-fn unintersect(ranges: &mut Vec<(u64, u64)>) {
-    let mut i = 0;
-    loop {
-        if i + 1 >= ranges.len() {
-            break;
+    for range in ranges {
+        if ret.is_empty() {
+            ret.push(range);
+            continue;
         }
-        if ranges[i + 1].0 <= ranges[i].1 {
-            ranges[i].1 = ranges[i].1.max(ranges[i + 1].1);
-            ranges.remove(i + 1);
+
+        let last_range = ret.last().unwrap();
+
+        if range.0 <= last_range.1 {
+            ret.last_mut().unwrap().1 = last_range.1.max(range.1);
         } else {
-            i += 1;
+            ret.push(range);
         }
     }
+
+    ret
 }
 
-fn main() {
+fn part1() -> String {
     let mut f = File::open("day5.txt").unwrap();
     let mut data = String::new();
     f.read_to_string(&mut data).unwrap();
@@ -63,14 +69,9 @@ fn main() {
 
     ranges.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 
-    println!("{}", ranges.len());
-
-    unintersect(&mut ranges);
-
-    println!("{}", ranges.len());
+    let ranges = unintersect(ranges);
 
     let mut part1 = 0;
-    let mut part2 = 0;
     
     for id in ids {
         if search_id(id, &ranges).is_some() {
@@ -78,10 +79,34 @@ fn main() {
         }
     }
 
+    part1.to_string()
+}
+
+fn part2() -> String {
+    let mut f = File::open("day5.txt").unwrap();
+    let mut data = String::new();
+    f.read_to_string(&mut data).unwrap();
+
+    let (mut ranges, _) = list_parser::ranges_and_ids(&data).unwrap();
+
+    ranges.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+
+    let ranges = unintersect(ranges);
+
+    let mut part2 = 0;
+    
     for range in ranges {
         part2 += range.1 + 1 - range.0;
     }
 
-    println!("Part 1: {part1}");
-    println!("Part 2: {part2}");
+    part2.to_string()
 }
+
+fn main() {
+    let mut c = Criterion::default();
+
+    c.bench_function("day5_part1", |b| b.iter(|| part1()));
+
+    c.bench_function("day5_part2", |b| b.iter(|| part2()));
+}
+

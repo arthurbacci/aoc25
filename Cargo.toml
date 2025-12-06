@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 peg = "0.8.5"
 itertools = "0.14"
+criterion = "0.5"
