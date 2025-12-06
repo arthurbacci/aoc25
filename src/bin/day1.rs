@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::Read;
 
+use criterion::Criterion;
+
 peg::parser! {
     grammar rotations_parser() for str {
         rule dir_sign() -> i32
@@ -20,7 +22,7 @@ peg::parser! {
     }
 }
 
-fn main() {
+fn part1() -> String {
     let mut f = File::open("day1.txt").unwrap();
     let mut data = String::new();
     f.read_to_string(&mut data).unwrap();
@@ -29,6 +31,26 @@ fn main() {
 
     let mut dial = 50;
     let mut pass1 = 0;
+
+    for rotation in rotations {
+        dial = (dial + (rotation % 100) + 100) % 100;
+
+        if dial == 0 {
+            pass1 += 1;
+        }
+    }
+
+    pass1.to_string()
+}
+
+fn part2() -> String {
+    let mut f = File::open("day1.txt").unwrap();
+    let mut data = String::new();
+    f.read_to_string(&mut data).unwrap();
+
+    let rotations = rotations_parser::rotations(&data).unwrap();
+
+    let mut dial = 50;
     let mut pass2 = 0;
 
     for rotation in rotations {
@@ -44,12 +66,16 @@ fn main() {
 
         dial += 100;
         dial %= 100;
-
-        if dial == 0 {
-            pass1 += 1;
-        }
     }
 
-    println!("Part 1 password: {}", pass1);
-    println!("Part 2 password: {}", pass2);
+    pass2.to_string()
 }
+
+fn main() {
+    let mut c = Criterion::default();
+
+    c.bench_function("day1_part1", |b| b.iter(|| part1()));
+
+    c.bench_function("day1_part2", |b| b.iter(|| part2()));
+}
+
