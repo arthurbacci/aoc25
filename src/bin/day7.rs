@@ -37,28 +37,59 @@ fn part1() -> String {
     let mut total = 0;
 
     for ln in manifold {
-        let mut next_beams = Vec::new();
+        let (to_split_beams, next_beams) = beams.into_iter()
+            .partition(|x| ln.contains(x));
+        beams = next_beams;
 
-        for r in ln.iter().filter(|x| beams.contains(x)) {
-            if !next_beams.contains(&(r - 1)) && !beams.contains(&(r - 1)) {
-                next_beams.push(r - 1);
+        for r in to_split_beams {
+            if !beams.contains(&(r - 1)) {
+                beams.push(r - 1);
             }
-            next_beams.push(r + 1);
+            if !beams.contains(&(r + 1)) {
+                beams.push(r + 1);
+            }
             total += 1;
         }
-
-        beams = beams.into_iter()
-            .filter(|x| !ln.contains(x))
-            .chain(next_beams.into_iter())
-            .collect();
     }
 
     total.to_string()
 }
 
+fn part2() -> String {
+    let mut f = File::open("day7.txt").unwrap();
+    let mut data = String::new();
+    f.read_to_string(&mut data).unwrap();
+
+    let (beam, manifold) = manifold_parser::manifold(&data).unwrap();
+    
+    let mut beams = vec![(beam, 1)];
+    let mut total = 0;
+
+    for ln in manifold {
+        let (to_split_beams, next_beams) = beams.into_iter()
+            .partition(|(x, _)| ln.contains(x));
+        beams = next_beams;
+
+        for (r, t) in to_split_beams {
+            if let Some(pos) = beams.iter().position(|&(x, _)| x == r - 1) {
+                beams[pos].1 += t;
+            } else {
+                beams.push((r - 1, t));
+            }
+            if let Some(pos) = beams.iter().position(|&(x, _)| x == r + 1) {
+                beams[pos].1 += t;
+            } else {
+                beams.push((r + 1, t));
+            }
+        }
+    }
+
+    beams.into_iter().map(|(_, t)| t).sum::<usize>().to_string()
+}
+
 fn main() {
     println!("Part 1: {}", part1());
-    // println!("Part 2: {}", part2());
+    println!("Part 2: {}", part2());
 
     let mut c = Criterion::default();
 
