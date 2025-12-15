@@ -27,12 +27,16 @@ peg::parser! {
     }
 }
 
-fn part1() -> String {
+fn parsed() -> (usize, Vec<Vec<usize>>) {
     let mut f = File::open("day7.txt").unwrap();
     let mut data = String::new();
     f.read_to_string(&mut data).unwrap();
 
-    let (beam, manifold) = manifold_parser::manifold(&data).unwrap();
+    manifold_parser::manifold(&data).unwrap()
+}
+
+fn part1() -> String {
+    let (beam, manifold) = parsed();
     
     let mut beams = HashSet::new();
     beams.insert(beam);
@@ -54,11 +58,7 @@ fn part1() -> String {
 }
 
 fn part2() -> String {
-    let mut f = File::open("day7.txt").unwrap();
-    let mut data = String::new();
-    f.read_to_string(&mut data).unwrap();
-
-    let (beam, manifold) = manifold_parser::manifold(&data).unwrap();
+    let (beam, manifold) = parsed();
     
     let mut beams = HashMap::new();
     beams.insert(beam, 1);
@@ -84,5 +84,7 @@ fn main() {
     c.bench_function("day7_part1", |b| b.iter(|| part1()));
 
     c.bench_function("day7_part2", |b| b.iter(|| part2()));
+
+    c.bench_function("parser", |b| b.iter(|| parsed()));
 }
 
