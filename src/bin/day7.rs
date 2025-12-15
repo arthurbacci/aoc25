@@ -93,8 +93,8 @@ fn main() {
 
     let mut c = Criterion::default();
 
-    // c.bench_function("day7_part1", |b| b.iter(|| part1()));
+    c.bench_function("day7_part1", |b| b.iter(|| part1()));
 
-    // c.bench_function("day7_part2", |b| b.iter(|| part2()));
+    c.bench_function("day7_part2", |b| b.iter(|| part2()));
 }
 
