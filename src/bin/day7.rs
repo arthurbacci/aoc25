@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Read;
+use std::collections::{HashSet, HashMap};
 
 use criterion::Criterion;
 
@@ -33,22 +34,19 @@ fn part1() -> String {
 
     let (beam, manifold) = manifold_parser::manifold(&data).unwrap();
     
-    let mut beams = vec![beam];
+    let mut beams = HashSet::new();
+    beams.insert(beam);
+
     let mut total = 0;
 
     for ln in manifold {
-        let (to_split_beams, next_beams) = beams.into_iter()
-            .partition(|x| ln.contains(x));
-        beams = next_beams;
+        for r in ln {
+            if beams.remove(&r) {
+                beams.insert(r - 1);
+                beams.insert(r + 1);
 
-        for r in to_split_beams {
-            if !beams.contains(&(r - 1)) {
-                beams.push(r - 1);
+                total += 1;
             }
-            if !beams.contains(&(r + 1)) {
-                beams.push(r + 1);
-            }
-            total += 1;
         }
     }
 
@@ -62,29 +60,19 @@ fn part2() -> String {
 
     let (beam, manifold) = manifold_parser::manifold(&data).unwrap();
     
-    let mut beams = vec![(beam, 1)];
-    let mut total = 0;
+    let mut beams = HashMap::new();
+    beams.insert(beam, 1);
 
     for ln in manifold {
-        let (to_split_beams, next_beams) = beams.into_iter()
-            .partition(|(x, _)| ln.contains(x));
-        beams = next_beams;
-
-        for (r, t) in to_split_beams {
-            if let Some(pos) = beams.iter().position(|&(x, _)| x == r - 1) {
-                beams[pos].1 += t;
-            } else {
-                beams.push((r - 1, t));
-            }
-            if let Some(pos) = beams.iter().position(|&(x, _)| x == r + 1) {
-                beams[pos].1 += t;
-            } else {
-                beams.push((r + 1, t));
+        for r in ln {
+            if let Some(t) = beams.remove(&r) {
+                *beams.entry(r - 1).or_insert(0) += t;
+                *beams.entry(r + 1).or_insert(0) += t;
             }
         }
     }
 
-    beams.into_iter().map(|(_, t)| t).sum::<usize>().to_string()
+    beams.values().sum::<usize>().to_string()
 }
 
 fn main() {
